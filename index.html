@@ -3,394 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Latch</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #0a0a0a;
-    color: #e0e0e0;
-    font-family: 'JetBrains Mono', monospace;
-    height: 100dvh;
-    width: 100vw;
-    overflow: hidden;
-    touch-action: manipulation;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  /* --- Camera viewfinder --- */
-  #viewfinder {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #viewfinder video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  #viewfinder .shutter-zone {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-  }
-
-  #viewfinder .hud {
-    position: absolute;
-    top: 12px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 16px;
-    z-index: 3;
-    pointer-events: none;
-  }
-
-  #viewfinder .hud > * {
-    pointer-events: auto;
-  }
-
-  .stack-count {
-    background: rgba(0,0,0,0.6);
-    border: 1px solid #333;
-    padding: 4px 10px;
-    font-size: 13px;
-    letter-spacing: 1px;
-    color: #888;
-  }
-
-  .stack-count.has-items {
-    color: #f0c040;
-    border-color: #f0c040;
-    cursor: pointer;
-  }
-
-  .switch-cam {
-    background: rgba(0,0,0,0.6);
-    border: 1px solid #333;
-    color: #888;
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-
-  .flash {
-    position: fixed;
-    inset: 0;
-    background: #fff;
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.05s;
-  }
-
-  .flash.fire {
-    opacity: 0.7;
-    transition: none;
-  }
-
-  /* --- Latch hold view --- */
-  #hold {
-    position: fixed;
-    inset: 0;
-    display: none;
-    flex-direction: column;
-    background: #0a0a0a;
-    z-index: 10;
-  }
-
-  #hold.active {
-    display: flex;
-  }
-
-  #hold .image-area {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-  }
-
-  #hold .image-area img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  }
-
-  #hold .controls {
-    display: flex;
-    height: 64px;
-    border-top: 1px solid #1a1a1a;
-    flex-shrink: 0;
-  }
-
-  #hold .controls button {
-    flex: 1;
-    background: none;
-    border: none;
-    color: #e0e0e0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  #hold .controls button:active {
-    background: #1a1a1a;
-  }
-
-  #hold .controls .pop-btn {
-    color: #f04040;
-    border-right: 1px solid #1a1a1a;
-  }
-
-  #hold .controls .back-btn {
-    color: #888;
-  }
-
-  #hold .position-indicator {
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 11px;
-    color: #555;
-    letter-spacing: 1px;
-  }
-
-  /* --- Empty state --- */
-  .empty-state {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: #333;
-    letter-spacing: 2px;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* --- Permission / error --- */
-  #error-screen {
-    position: fixed;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: #0a0a0a;
-    z-index: 50;
-    padding: 32px;
-    text-align: center;
-  }
-
-  #error-screen.active {
-    display: flex;
-  }
-
-  #error-screen p {
-    color: #666;
-    font-size: 13px;
-    line-height: 1.8;
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;height:100dvh;width:100vw;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+video,img{position:fixed;inset:0;width:100%;height:100%;object-fit:cover}
+canvas{display:none}
 </style>
 </head>
 <body>
-
-<div id="viewfinder">
-  <video autoplay playsinline muted></video>
-  <div class="shutter-zone" id="shutter"></div>
-  <div class="hud">
-    <div class="stack-count" id="stackCount">STACK 0</div>
-    <div class="switch-cam" id="switchCam">⟲</div>
-  </div>
-  <div class="empty-state" id="emptyHint" style="display:none;">カメラ起動中</div>
-</div>
-
-<div class="flash" id="flash"></div>
-
-<div id="hold">
-  <div class="image-area">
-    <img id="holdImg" src="" alt="">
-    <div class="position-indicator" id="posIndicator"></div>
-  </div>
-  <div class="controls">
-    <button class="pop-btn" id="popBtn">RESET</button>
-    <button class="back-btn" id="backBtn">BACK</button>
-  </div>
-</div>
-
-<div id="error-screen">
-  <p id="errorMsg"></p>
-</div>
-
-<canvas id="capture" style="display:none;"></canvas>
-
+<video autoplay playsinline muted></video>
+<img id="held" style="display:none">
+<canvas id="c"></canvas>
 <script>
-(function() {
-  const video = document.querySelector('#viewfinder video');
-  const shutter = document.getElementById('shutter');
-  const flash = document.getElementById('flash');
-  const hold = document.getElementById('hold');
-  const holdImg = document.getElementById('holdImg');
-  const popBtn = document.getElementById('popBtn');
-  const backBtn = document.getElementById('backBtn');
-  const stackCountEl = document.getElementById('stackCount');
-  const posIndicator = document.getElementById('posIndicator');
-  const switchCam = document.getElementById('switchCam');
-  const errorScreen = document.getElementById('error-screen');
-  const errorMsg = document.getElementById('errorMsg');
-  const canvas = document.getElementById('capture');
-  const emptyHint = document.getElementById('emptyHint');
+const video=document.querySelector('video');
+const img=document.getElementById('held');
+const canvas=document.getElementById('c');
+let locked=false;
+let wl=null;
 
-  let stack = [];
-  let stream = null;
-  let facingMode = 'environment';
-  let wakeLock = null;
+navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920}},audio:false}).then(s=>{video.srcObject=s});
 
-  // --- Wake Lock ---
-  async function requestWakeLock() {
-    try {
-      if ('wakeLock' in navigator) {
-        wakeLock = await navigator.wakeLock.request('screen');
-        wakeLock.addEventListener('release', () => { wakeLock = null; });
-      }
-    } catch(e) {}
-  }
+async function hold(){if(locked)return;
+const w=video.videoWidth,h=video.videoHeight;if(!w)return;
+canvas.width=w;canvas.height=h;
+canvas.getContext('2d').drawImage(video,0,0);
+img.src=canvas.toDataURL('image/jpeg',0.92);
+img.style.display='block';
+locked=true;
+try{if('wakeLock'in navigator)wl=await navigator.wakeLock.request('screen')}catch(e){}}
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && hold.classList.contains('active')) {
-      requestWakeLock();
-    }
-  });
+function reset(){img.style.display='none';img.src='';locked=false;
+if(wl){wl.release();wl=null}}
 
-  // --- Camera ---
-  async function startCamera() {
-    emptyHint.style.display = 'flex';
-    try {
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-      }
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false
-      });
-      video.srcObject = stream;
-      emptyHint.style.display = 'none';
-    } catch(e) {
-      errorMsg.textContent = 'カメラへのアクセスが必要です。ブラウザの設定からカメラを許可してください。';
-      errorScreen.classList.add('active');
-    }
-  }
-
-  switchCam.addEventListener('click', (e) => {
-    e.stopPropagation();
-    facingMode = facingMode === 'environment' ? 'user' : 'environment';
-    startCamera();
-  });
-
-  // --- Capture ---
-  function captureFrame() {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    if (!vw || !vh) return null;
-    canvas.width = vw;
-    canvas.height = vh;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, vw, vh);
-    return canvas.toDataURL('image/jpeg', 0.92);
-  }
-
-  function fireFlash() {
-    flash.classList.add('fire');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        flash.classList.remove('fire');
-      });
-    });
-  }
-
-  // --- Stack operations ---
-  function updateStackCount() {
-    const n = stack.length;
-    stackCountEl.textContent = 'STACK ' + n;
-    if (n > 0) {
-      stackCountEl.classList.add('has-items');
-    } else {
-      stackCountEl.classList.remove('has-items');
-    }
-  }
-
-  function showHold() {
-    if (stack.length === 0) return;
-    const top = stack[stack.length - 1];
-    holdImg.src = top;
-    posIndicator.textContent = stack.length + ' / ' + stack.length;
-    hold.classList.add('active');
-    requestWakeLock();
-  }
-
-  function hideHold() {
-    hold.classList.remove('active');
-    holdImg.src = '';
-    if (wakeLock) {
-      wakeLock.release();
-      wakeLock = null;
-    }
-  }
-
-  // --- Event handlers ---
-  shutter.addEventListener('click', () => {
-    const dataUrl = captureFrame();
-    if (!dataUrl) return;
-    fireFlash();
-    stack.push(dataUrl);
-    updateStackCount();
-    showHold();
-  });
-
-  stackCountEl.addEventListener('click', () => {
-    if (stack.length > 0) showHold();
-  });
-
-  popBtn.addEventListener('click', () => {
-    if (stack.length > 0) {
-      stack.pop();
-      updateStackCount();
-    }
-    if (stack.length > 0) {
-      showHold();
-    } else {
-      hideHold();
-    }
-  });
-
-  backBtn.addEventListener('click', () => {
-    hideHold();
-  });
-
-  // --- Init ---
-  startCamera();
-  updateStackCount();
-})();
+document.addEventListener('click',()=>{locked?reset():hold()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&locked&&'wakeLock'in navigator)navigator.wakeLock.request('screen').then(l=>wl=l).catch(()=>{})});
 </script>
 </body>
 </html>
